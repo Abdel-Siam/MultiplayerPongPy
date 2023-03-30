@@ -25,7 +25,6 @@ def run():
         channel = grpc.insecure_channel('localhost:50051')
         if(ui_session.grpc_server_on(channel)):
             print("Connection Established!")
-
             ui_session.gameState(channel)
         else:
             # gameState()
@@ -116,6 +115,7 @@ class UI():
             clock = pygame.time.Clock()
             BALLVECTOR = [0,0] # XY COMPONENT OF VELOCITY.
             #pygame.display.update()
+            stub = pongps_pb2_grpc.add_GameServiceServicer_to_server(channel)
 
             while True:
                 for event in pygame.event.get():
