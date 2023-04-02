@@ -14,7 +14,7 @@ _sym_db = _symbol_database.Default()
 from google.protobuf import empty_pb2 as google_dot_protobuf_dot_empty__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0cpongps.proto\x12\x04main\x1a\x1bgoogle/protobuf/empty.proto\"\x1a\n\x08\x63lientId\x12\x0e\n\x06whoami\x18\x01 \x01(\x05\"*\n\x0fupdatePaddlePos\x12\n\n\x02id\x18\x01 \x01(\x05\x12\x0b\n\x03pos\x18\x02 \x01(\x05\"i\n\rcurrGameState\x12\x0c\n\x04pos1\x18\x01 \x01(\x05\x12\x0c\n\x04pos2\x18\x02 \x01(\x05\x12\r\n\x05\x62\x61llx\x18\x03 \x01(\x05\x12\r\n\x05\x62\x61lly\x18\x04 \x01(\x05\x12\x0e\n\x06\x62\x61llVx\x18\x05 \x01(\x05\x12\x0e\n\x06\x62\x61llVy\x18\x06 \x01(\x05\"*\n\x06scored\x12\x0f\n\x07p1Score\x18\x01 \x01(\x05\x12\x0f\n\x07p2Score\x18\x02 \x01(\x05\"@\n\x0breplyScored\x12\x0b\n\x03\x61\x63k\x18\x01 \x01(\t\x12$\n\x05reset\x18\x02 \x01(\x0b\x32\x15.main.updatePaddlePos2\xf0\x01\n\x0bGameService\x12\x37\n\rconnectClient\x12\x16.google.protobuf.Empty\x1a\x0e.main.clientId\x12=\n\x0fupdateClientPos\x12\x15.main.updatePaddlePos\x1a\x13.main.currGameState\x12/\n\x0c\x63lientScored\x12\x0c.main.scored\x1a\x11.main.replyScored\x12\x38\n\tballmoved\x12\x13.main.currGameState\x1a\x16.google.protobuf.Emptyb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0cpongps.proto\x12\x04main\x1a\x1bgoogle/protobuf/empty.proto\"\x1a\n\x08\x63lientId\x12\x0e\n\x06whoami\x18\x01 \x01(\x05\"*\n\x0fupdatePaddlePos\x12\n\n\x02id\x18\x01 \x01(\x05\x12\x0b\n\x03pos\x18\x02 \x01(\x05\"i\n\rcurrGameState\x12\x0c\n\x04pos1\x18\x01 \x01(\x05\x12\x0c\n\x04pos2\x18\x02 \x01(\x05\x12\r\n\x05\x62\x61llx\x18\x03 \x01(\x05\x12\r\n\x05\x62\x61lly\x18\x04 \x01(\x05\x12\x0e\n\x06\x62\x61llVx\x18\x05 \x01(\x05\x12\x0e\n\x06\x62\x61llVy\x18\x06 \x01(\x05\".\n\x19StreamBallPositionRequest\x12\x11\n\tclient_id\x18\x01 \x01(\x05\"*\n\x06scored\x12\x0f\n\x07p1Score\x18\x01 \x01(\x05\x12\x0f\n\x07p2Score\x18\x02 \x01(\x05\".\n\x0c\x62\x61llPosition\x12\x0e\n\x06\x62\x61ll_x\x18\x01 \x01(\x05\x12\x0e\n\x06\x62\x61ll_y\x18\x02 \x01(\x05\"@\n\x0breplyScored\x12\x0b\n\x03\x61\x63k\x18\x01 \x01(\t\x12$\n\x05reset\x18\x02 \x01(\x0b\x32\x15.main.updatePaddlePos2\xbc\x02\n\x0bGameService\x12\x37\n\rconnectClient\x12\x16.google.protobuf.Empty\x1a\x0e.main.clientId\x12=\n\x0fupdateClientPos\x12\x15.main.updatePaddlePos\x1a\x13.main.currGameState\x12/\n\x0c\x63lientScored\x12\x0c.main.scored\x1a\x11.main.replyScored\x12\x35\n\tballmoved\x12\x12.main.ballPosition\x1a\x12.main.ballPosition0\x01\x12M\n\x12StreamBallPosition\x12\x1f.main.StreamBallPositionRequest\x1a\x12.main.ballPosition\"\x00\x30\x01\x62\x06proto3')
 
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, globals())
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'pongps_pb2', globals())
@@ -27,10 +27,14 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   _UPDATEPADDLEPOS._serialized_end=121
   _CURRGAMESTATE._serialized_start=123
   _CURRGAMESTATE._serialized_end=228
-  _SCORED._serialized_start=230
-  _SCORED._serialized_end=272
-  _REPLYSCORED._serialized_start=274
-  _REPLYSCORED._serialized_end=338
-  _GAMESERVICE._serialized_start=341
-  _GAMESERVICE._serialized_end=581
+  _STREAMBALLPOSITIONREQUEST._serialized_start=230
+  _STREAMBALLPOSITIONREQUEST._serialized_end=276
+  _SCORED._serialized_start=278
+  _SCORED._serialized_end=320
+  _BALLPOSITION._serialized_start=322
+  _BALLPOSITION._serialized_end=368
+  _REPLYSCORED._serialized_start=370
+  _REPLYSCORED._serialized_end=434
+  _GAMESERVICE._serialized_start=437
+  _GAMESERVICE._serialized_end=753
 # @@protoc_insertion_point(module_scope)

@@ -30,10 +30,15 @@ class GameServiceStub(object):
                 request_serializer=pongps__pb2.scored.SerializeToString,
                 response_deserializer=pongps__pb2.replyScored.FromString,
                 )
-        self.ballmoved = channel.unary_unary(
+        self.ballmoved = channel.unary_stream(
                 '/main.GameService/ballmoved',
-                request_serializer=pongps__pb2.currGameState.SerializeToString,
-                response_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+                request_serializer=pongps__pb2.ballPosition.SerializeToString,
+                response_deserializer=pongps__pb2.ballPosition.FromString,
+                )
+        self.StreamBallPosition = channel.unary_stream(
+                '/main.GameService/StreamBallPosition',
+                request_serializer=pongps__pb2.StreamBallPositionRequest.SerializeToString,
+                response_deserializer=pongps__pb2.ballPosition.FromString,
                 )
 
 
@@ -68,6 +73,12 @@ class GameServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def StreamBallPosition(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_GameServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -86,10 +97,15 @@ def add_GameServiceServicer_to_server(servicer, server):
                     request_deserializer=pongps__pb2.scored.FromString,
                     response_serializer=pongps__pb2.replyScored.SerializeToString,
             ),
-            'ballmoved': grpc.unary_unary_rpc_method_handler(
+            'ballmoved': grpc.unary_stream_rpc_method_handler(
                     servicer.ballmoved,
-                    request_deserializer=pongps__pb2.currGameState.FromString,
-                    response_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+                    request_deserializer=pongps__pb2.ballPosition.FromString,
+                    response_serializer=pongps__pb2.ballPosition.SerializeToString,
+            ),
+            'StreamBallPosition': grpc.unary_stream_rpc_method_handler(
+                    servicer.StreamBallPosition,
+                    request_deserializer=pongps__pb2.StreamBallPositionRequest.FromString,
+                    response_serializer=pongps__pb2.ballPosition.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -163,8 +179,25 @@ class GameService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/main.GameService/ballmoved',
-            pongps__pb2.currGameState.SerializeToString,
-            google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+        return grpc.experimental.unary_stream(request, target, '/main.GameService/ballmoved',
+            pongps__pb2.ballPosition.SerializeToString,
+            pongps__pb2.ballPosition.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def StreamBallPosition(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_stream(request, target, '/main.GameService/StreamBallPosition',
+            pongps__pb2.StreamBallPositionRequest.SerializeToString,
+            pongps__pb2.ballPosition.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

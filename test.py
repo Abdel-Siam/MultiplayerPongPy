@@ -33,6 +33,8 @@ def testFunction():
             print("2. Update Client Failed")
         else:
             print("3. Update Client Position Passed")
+   
+   
     ball_x = 500
     ball_y = 500
 
@@ -41,6 +43,6 @@ def testFunction():
     request = pongps_pb2.StreamBallPositionRequest(client_id=0)
     for ball_position in stub.StreamBallPosition(request):
             print(f'Client {0}: Ball Position:\nBall X: {ball_position.ball_x}\nBall Y:{ball_position.ball_y}')
-            time.sleep(0.1)
+            time.sleep(0.00001)
 
 testFunction()

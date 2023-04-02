@@ -24,11 +24,21 @@ message currGameState {
   int32 ballVy = 6; // ball's y velocity
 }
 
+message StreamBallPositionRequest {
+  int32 client_id = 1;
+}
+
 // message from the server 
 message scored{
   // players scores
   int32 p1Score = 1;
   int32 p2Score = 2;
+}
+
+message ballPosition{
+  int32 ball_x = 1;
+  int32 ball_y = 2;
+
 }
 
 // reply to scored
@@ -48,6 +58,8 @@ service GameService {
   // server sends to client that one has scored
   rpc clientScored(scored) returns (replyScored);
   // server send to client unsoliceted ball position (if the clients didnt move but the ball did)
-  rpc ballmoved(currGameState) returns (google.protobuf.Empty); 
+  rpc ballmoved(ballPosition) returns (stream ballPosition); 
+  rpc StreamBallPosition (StreamBallPositionRequest) returns (stream ballPosition) {}
+
 } 
 
