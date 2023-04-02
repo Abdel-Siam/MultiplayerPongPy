@@ -1,13 +1,17 @@
+"""         IMPORTS        """
+from concurrent import futures
 from time import sleep
 import pygame
 import sys,os
 import grpc
+import  google
 import pongps_pb2_grpc 
 import pongps_pb2
 import random
+from server import GameServicerServicer
 pygame.init()
 
-# Constants
+"""    COSNTS    """
 
 SCREEN_WIDTH = 1280
 SCREEN_HEIGHT = 720
@@ -19,17 +23,8 @@ BLACK = (0, 0, 0)
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption('Pong UI')
 channel = None
-def run():
-        ui_session = UI()
-        ui_session.startScreen()
-        channel = grpc.insecure_channel('localhost:50051')
-        if(ui_session.grpc_server_on(channel)):
-            print("Connection Established!")
-            ui_session.gameState(channel)
-        else:
-            # gameState()
-            ui_session.waitScreen(channel)
-            ui_session.gameState(channel)
+
+
 
 class UI():
     SCORE = [0,0]
@@ -62,13 +57,15 @@ class UI():
             # Generate Game Component for Paddle One
             paddle_one = pygame.Rect(20,
                                       SCREEN_HEIGHT // 2 - PADDLE_HEIGHT // 2,
-                                      PADDLE_WIDTH, PADDLE_HEIGHT)
+                                      PADDLE_WIDTH, 
+                                      PADDLE_HEIGHT)
             RenderSet['paddle_one'] = paddle_one
 
             # Generate Game Component for Paddle Two
             paddle_two = pygame.Rect(SCREEN_WIDTH - 20 - PADDLE_WIDTH, 
                                      SCREEN_HEIGHT // 2 - PADDLE_HEIGHT // 2,
-                                     PADDLE_WIDTH, PADDLE_HEIGHT)
+                                     PADDLE_WIDTH, 
+                                     PADDLE_HEIGHT)
             RenderSet['paddle_two'] = paddle_two
 
             # Generate Game Component for Ball.
@@ -115,23 +112,33 @@ class UI():
             clock = pygame.time.Clock()
             BALLVECTOR = [0,0] # XY COMPONENT OF VELOCITY.
             #pygame.display.update()
-            stub = pongps_pb2_grpc.add_GameServiceServicer_to_server(channel)
-
+            stub = pongps_pb2_grpc.GameServiceStub(channel)
+            player = stub.connectClient(google.protobuf.empty_pb2.Empty())
+            print(player.whoami)
+            # ternary operator for selecting which player you are.
+            player_paddle = 'paddle_one' if int(player.whoami)==0 else 'paddle_two'
             while True:
+                # Holder for user input. Basically needed in the event of a collision.
+                paddle_velocity = 1
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
                         pygame.quit()
                         sys.exit()
-                    elif event.type == pygame.MOUSEWHEEL:
-                        print(f'%s',pygame.mouse.get_pos())
-
+                    # DEBUG FEATURE. GET XY POS FROM MOUSEWHEEL MOVEMENT
+                    #elif event.type == pygame.MOUSEWHEEL:
+                     #   print(f'%s',pygame.mouse.get_pos())
 
                 # controls (w and s)
                 keys = pygame.key.get_pressed()
-                if keys[pygame.K_w] and RenderSet['paddle_one'].top > 0:
-                    RenderSet['paddle_one'].move_ip(0, -5)
-                if keys[pygame.K_s] and RenderSet['paddle_one'].bottom < SCREEN_HEIGHT:
-                    RenderSet['paddle_one'].move_ip(0, 5)
+                if keys[pygame.K_w] and RenderSet[player_paddle].top > 0:
+                    paddle_velocity = -5
+                    RenderSet[player_paddle].move_ip(0, -5)
+                    stub.updateClientPos(id = player.whoami, pos = [0,-5])
+                if keys[pygame.K_s] and RenderSet[player_paddle].bottom < SCREEN_HEIGHT:
+                    paddle_velocity = 5
+                    RenderSet[player_paddle].move_ip(0, 5)
+                    stub.updateClientPos(id = player.whoami, pos = [0,5])
+
                 if BALLVECTOR[0] == 0 and BALLVECTOR[1] == 0:
                     BALLVECTOR = [random.uniform(3,10), random.uniform(3,10)]
                 if RenderSet['ball'].y >= SCREEN_HEIGHT or RenderSet['ball'].y <= 0:
@@ -148,7 +155,10 @@ class UI():
                     RenderSet['ball'].x = SCREEN_WIDTH // 2 
                     RenderSet['ball'].y = SCREEN_HEIGHT // 2
 
-
+                # collision with paddle
+                    if(pygame.Rect.collidelist(RenderSet[player_paddle], RenderSet['ball'])) != -1:
+                        BALLVECTOR[0] = -BALLVECTOR[0]+0.5*paddle_velocity
+                        BALLVECTOR[1] = -BALLVECTOR[1]+0.5*paddle_velocity
 
 
                 else: 
@@ -238,6 +248,17 @@ class UI():
             sleep(0.3)
             pygame.display.update()
             
+# MAIN ENTRY 
+def run():
+        ui_session = UI()
+        ui_session.startScreen()
+        channel = grpc.insecure_channel('localhost:50051')
+        if(ui_session.grpc_server_on(channel)):
+            print("Connection Established!")
+            ui_session.gameState(channel)
+        else:
+            # gameState()
+            ui_session.waitScreen(channel)
+            ui_session.gameState(channel)
 
-if __name__ == '__main__':
-    run()
+
