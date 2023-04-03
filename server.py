@@ -68,12 +68,7 @@ class GameServicerServicer(pongps_pb2_grpc.GameServiceServicer):
             return pongps_pb2.clientStatus(isConnected = 1)
 
         
-    def updateBallPos(self):
-            while True:
-                self.semaphore.acquire()
 
-                if(self.ready):
-                self.semaphore.release()
 
 
 
@@ -170,9 +165,7 @@ if __name__ == '__main__':
     BALLPOS  = [0,0]
     server.add_insecure_port(f'[::]:{PORT}')
     server.start()
-    ball_thread = threading.Thread(certified_gamer_moment.updateBallPos())
 
-    ball_thread.start()
 
 
     server.wait_for_termination()
