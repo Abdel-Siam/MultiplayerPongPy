@@ -13,7 +13,9 @@ message updatePaddlePos {
   int32 id = 1;
   int32 pos = 2;
 }
-
+message clientStatus{
+  int32 isConnected = 1;
+}
 // reply to previous
 message currGameState {
   int32 pos1 = 1; // first player position
@@ -60,6 +62,7 @@ service GameService {
   // server send to client unsoliceted ball position (if the clients didnt move but the ball did)
   rpc ballmoved(ballPosition) returns (stream ballPosition); 
   rpc StreamBallPosition (StreamBallPositionRequest) returns (stream ballPosition) {}
+  rpc otherClientConnected(clientId) returns (clientStatus);
 
 } 
 

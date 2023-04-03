@@ -1,12 +1,13 @@
 import random
 import sys
+import threading
 import grpc
 import pongps_pb2
 import pongps_pb2_grpc
 from concurrent import futures
 import PlayerState as pb
 import time 
-
+import Ball
 
 NUM_WORKERS = 2
 playerUTC = []
@@ -34,28 +35,6 @@ Note :
 SCREEN_HEIGHT = 720  
 SCREEN_WIDTH = 1280
 
-class Ball:
-    def __init__(self, x, y, vx, vy):
-        self.x = x
-        self.y = y
-        self.vx = vx
-        self.vy = vy
-        self.radius = 10 # set the radius of the ball
-
-    def update_position(self):
-        # Update position
-        self.x += self.vx
-        self.y += self.vy
-        
-        # Check for collisions with walls
-        if self.x - self.radius < 0 or self.x + self.radius > SCREEN_WIDTH:
-            self.vx = -self.vx
-        if self.y - self.radius < 0 or self.y + self.radius > SCREEN_HEIGHT:
-            self.vy = -self.vy
-    
-    def setspeed(self,vx,vy):
-        self.vx = vx 
-        self.vy = vy
 
         
         # Add your game logic to handle collisions with other objects here.      
@@ -63,25 +42,47 @@ class Ball:
 class GameServicerServicer(pongps_pb2_grpc.GameServiceServicer):
     def __init__(self):
         value = random.randint(-10, 10)
-        self.ball = Ball(640, 360, value, value)
-
+        self.ball = Ball.Ball(640, 360, value, value)
+        players = []
+        self.semaphore = threading.Semaphore()
+        self.ready = False
             
 
     def StreamBallPosition(self, request, context):
         while True:
+            self.semaphore.acquire()
             self.ball.update_position()
+
             ball_position = pongps_pb2.ballPosition(ball_x=self.ball.x, ball_y=self.ball.y)
-
-            print(f"x = {self.ball.x}, y = {self.ball.y}")
-
+            #print(f"x = {self.ball.x}, y = {self.ball.y}")
             yield ball_position
+            self.semaphore.release()
+
             time.sleep(0.00001)
+
+    def otherClientConnected(self, request,context):
+        print(len(players))
+        if(len(players)) != 2:
+            return pongps_pb2.clientStatus(isConnected = -1)
+        else:
+            return pongps_pb2.clientStatus(isConnected = 1)
+
+        
+    def updateBallPos(self):
+            while True:
+                self.semaphore.acquire()
+
+                if(self.ready):
+                self.semaphore.release()
+
 
 
     def connectClient(self, request, context):
         print("Entering Connect Client")
         print(len(players))
         if len(players) == 0:
+            print("Appending 1")
+
             connectTime_p1 = time.time()
             players.append([pb.PlayerState(0,20,310), connectTime_p1])
             return pongps_pb2.clientId(whoami = 0)
@@ -89,10 +90,13 @@ class GameServicerServicer(pongps_pb2_grpc.GameServiceServicer):
             connectTime_p2 = time.time()
             # reset p1 time
             players[0][1] = time.time()
+            print("Appending 2")
             players.append([pb.PlayerState(1,1240,310), connectTime_p2])
+            self.ready = True
+
             return pongps_pb2.clientId(whoami = 1)
+
         elif len(players) >= 2:
-            # Maybe raise an error instead?
             return pongps_pb2.clientId(whoami = -1)
 
     def updateClientPos(self, request, context):
@@ -158,13 +162,17 @@ if __name__ == '__main__':
     print(f"Starting Game Server on port {PORT}")
     server = grpc.server(futures.ThreadPoolExecutor(
         max_workers=int(NUM_WORKERS)))
-
-    pongps_pb2_grpc.add_GameServiceServicer_to_server(
-        GameServicerServicer(), server)
+    # Game class.
+    certified_gamer_moment = GameServicerServicer()
+    pongps_pb2_grpc.add_GameServiceServicer_to_server(certified_gamer_moment, server)
+    
     BALLVECTOR = [0,0]
     BALLPOS  = [0,0]
     server.add_insecure_port(f'[::]:{PORT}')
     server.start()
+    ball_thread = threading.Thread(certified_gamer_moment.updateBallPos())
+
+    ball_thread.start()
 
 
     server.wait_for_termination()
