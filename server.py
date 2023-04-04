@@ -8,6 +8,8 @@ from concurrent import futures
 import PlayerState as pb
 import time 
 import Ball
+import socket
+import threading
 
 NUM_WORKERS = 2
 playerUTC = []
@@ -34,10 +36,11 @@ Note :
 # DIMENSIONS
 SCREEN_HEIGHT = 720  
 SCREEN_WIDTH = 1280
+"""
+TODO: Implement Socket to constitutively send ball pos in a synchronous manner to all clients 
+at time instance t
+"""
 
-
-        
-        # Add your game logic to handle collisions with other objects here.      
 
 class GameServicerServicer(pongps_pb2_grpc.GameServiceServicer):
     def __init__(self):
@@ -46,25 +49,27 @@ class GameServicerServicer(pongps_pb2_grpc.GameServiceServicer):
         players = []
         self.semaphore = threading.Semaphore()
         self.ready = False
-            
+    
+               
 
     def StreamBallPosition(self, request, context):
         while True:
-            self.semaphore.acquire()
-            self.ball.update_position()
-
             ball_position = pongps_pb2.ballPosition(ball_x=self.ball.x, ball_y=self.ball.y)
             #print(f"x = {self.ball.x}, y = {self.ball.y}")
-            yield ball_position
-            self.semaphore.release()
+            self.ball.update_position()
 
-            time.sleep(0.00001)
+            yield ball_position
+
+            
+
+
 
     def otherClientConnected(self, request,context):
         print(len(players))
         if(len(players)) != 2:
             return pongps_pb2.clientStatus(isConnected = -1)
         else:
+            self.balltimer.start()
             return pongps_pb2.clientStatus(isConnected = 1)
 
         
@@ -159,10 +164,13 @@ if __name__ == '__main__':
         max_workers=int(NUM_WORKERS)))
     # Game class.
     certified_gamer_moment = GameServicerServicer()
+ 
+
     pongps_pb2_grpc.add_GameServiceServicer_to_server(certified_gamer_moment, server)
     
     BALLVECTOR = [0,0]
     BALLPOS  = [0,0]
+
     server.add_insecure_port(f'[::]:{PORT}')
     server.start()
 

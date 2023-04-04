@@ -56,11 +56,11 @@ def testMultiClientBallPos():
     otherClientCheckerMessage = pongps_pb2.clientId(whoami = player.whoami)
 
     while(stub.otherClientConnected(otherClientCheckerMessage).isConnected == -1):
-        time.sleep(0)
+        time.sleep(0.5)
     for ball_position in stub.StreamBallPosition(request):
         c+=1
         print(f'Iteration {c}\nClient {player.whoami}: Ball Position:\nBall X: {ball_position.ball_x}\nBall Y:{ball_position.ball_y}')
-        time.sleep(0.00001)
+        time.sleep(0.5)
 testMultiClientBallPos()
 
 
