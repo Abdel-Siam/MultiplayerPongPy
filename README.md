@@ -21,7 +21,7 @@ The game includes basic sound effects and visual effects to enhance the player e
 To run the game, follow these steps:
 
 1. Clone the repository to your local machine.
-2. Install the required dependencies using pip: `pip install -r requirements.txt`
+2. Install the required dependencies using pip(3)
 3. Start the server by running python `server.py` from the command line.
 4. Start the client by running python `run.py` from the command line.
 
