@@ -1,179 +1,103 @@
-import random
-import sys
-import threading
-import grpc
-import pongps_pb2
-import pongps_pb2_grpc
-from concurrent import futures
-import PlayerState as pb
-import time 
-import Ball
 import socket
-import threading
-
-NUM_WORKERS = 2
-playerUTC = []
-players = []
-ballxPos = 0
-ballyPos = 0
-ballvx = 0
-ballvy = 0
-scoreone = 0
-scoretwo = 0
-
-
-
-"""
-def TimerHelper():
-    while(True):
-20,310 -> Rect Player 1 init pos
-
-1240,310 -> Rect Player 2 init pos
-Note :
-"""               
-
-
-# DIMENSIONS
-SCREEN_HEIGHT = 720  
+from _thread import *
+import sys
+import time
+import Ball as b
 SCREEN_WIDTH = 1280
-"""
-TODO: Implement Socket to constitutively send ball pos in a synchronous manner to all clients 
-at time instance t
-"""
+SCREEN_HEIGHT = 720
+PADDLE_WIDTH = 20
+PADDLE_HEIGHT = 175
 
 
-class GameServicerServicer(pongps_pb2_grpc.GameServiceServicer):
-    def __init__(self):
-        value = random.randint(-10, 10)
-        self.ball = Ball.Ball(640, 360, value, value)
-        players = []
-        self.semaphore = threading.Semaphore()
-        self.ready = False
     
-               
+def checkCollision(paddleOne, paddleTwo, ball):
+    paddleOne = paddleOne.split(",")
+    paddleTwo = paddleTwo.split(",")
+    print(f"PaddleOne: {paddleOne}\nPaddleTwo: {paddleTwo}\nBall:{ball.x, ball.y}")
 
-    def StreamBallPosition(self, request, context):
-        while True:
-            ball_position = pongps_pb2.ballPosition(ball_x=self.ball.x, ball_y=self.ball.y)
-            #print(f"x = {self.ball.x}, y = {self.ball.y}")
-            self.ball.update_position()
+    ball.checkPaddleCollision(int(paddleOne[0]),int(paddleOne[1]),1)
+    ball.checkPaddleCollision(int(paddleTwo[0]),int(paddleTwo[1]),2)
+    
+    
+    
 
-            yield ball_position
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+server = 'localhost'
+port = 5555
 
-            
+server_ip = socket.gethostbyname(server)
 
+try:
+    s.bind((server, port))
 
+except socket.error as e:
+    print(str(e))
 
-    def otherClientConnected(self, request,context):
-        print(len(players))
-        if(len(players)) != 2:
-            return pongps_pb2.clientStatus(isConnected = -1)
-        else:
-            self.balltimer.start()
-            return pongps_pb2.clientStatus(isConnected = 1)
-
+s.listen(2)
+print("Waiting for a connection")
+# -- Init position -- # 
+ball_obj = b.Ball()
+ball_pos = start_ball_pos = ball_obj.serialize()
+paddle_one = f"0:{20},{SCREEN_HEIGHT // 2 - PADDLE_HEIGHT // 2}"
+paddle_two = f"1:{SCREEN_WIDTH - 20 - PADDLE_WIDTH},{SCREEN_HEIGHT // 2 - PADDLE_HEIGHT // 2}"
+p1Score = p2Score = "0"
+currentId = "0"
+pos = [paddle_one, paddle_two, ball_pos, p1Score, p2Score]
+def threaded_client(conn):
+    global currentId, pos
+    conn.send(str.encode(currentId))
+    currentId = "1"
+    reply = ''
+    paddleOne = pos[0].split(":")[1]
+    paddleTwo = pos[1].split(":")[1]
+    while True:
+        ball_obj.move()
+        ball_obj.increaseBallSpeed()
         
+        pos[3] = str(ball_obj.SCORE[0])
+        pos[4] = str(ball_obj.SCORE[1])
+        try:
+            data = conn.recv(2048)
+            reply = data.decode('utf-8')
 
+            if not data:
+                conn.send(str.encode("Goodbye"))
+                break
 
+            else:
+                print("Recieved: " + reply)
+                arr = reply.split(":")
+                id = int(arr[0])
+                pos[id] = reply
+                pos[2] = ball_obj.serialize()
 
+                if id == 0: nid = 1
+                if id == 1: nid = 0
+                # Format of string 
+                # opponentNumber:x,y/b:x,y[s]P1Score,P2Score
+                reply = pos[nid][:] +"/"+ pos[2] + "/" + pos[3]+","+ pos[4]
+                
 
-    def connectClient(self, request, context):
-        print("Entering Connect Client")
-        print(len(players))
-        if len(players) == 0:
-            print("Appending 1")
+                print("Sending: " + reply)
+            paddleOne = pos[0].split(":")[1]
+            paddleTwo = pos[1].split(":")[1]
+            
+            checkCollision(paddleOne, paddleTwo , ball_obj)
 
-            connectTime_p1 = time.time()
-            players.append([pb.PlayerState(0,20,310), connectTime_p1])
-            return pongps_pb2.clientId(whoami = 0)
-        elif len(players) == 1:
-            connectTime_p2 = time.time()
-            # reset p1 time
-            players[0][1] = time.time()
-            print("Appending 2")
-            players.append([pb.PlayerState(1,1240,310), connectTime_p2])
-            self.ready = True
+            conn.sendall(str.encode(reply))
+        except:
+            break
 
-            return pongps_pb2.clientId(whoami = 1)
+    print("Connection Closed")
+    currentId = "0"
+    conn.close()
 
-        elif len(players) >= 2:
-            return pongps_pb2.clientId(whoami = -1)
+while True:
+    conn, addr = s.accept()
+    print("Connected to: ", addr)
 
-    def updateClientPos(self, request, context):
-        # TODO: Put in semaphore?
-        print("Recieved Client Update Call")
-        print(request.id)
-        print(request.pos)
-        playerId = request.id
-        newPos = request.pos
-        #players[playerId].pos = newPos
-
-        # Check every update request if the other client has not updated via checking time delta. If so, return None
-        # None treated as a disconnect for the requesting client
-        """TIMEOUT LOGIC"""
-
-        if(len(players)>=2 and request.id > 0):
-            if abs(players[int(id)][1]-players[int(id)-1][1]) < 15:
-                players[int(id)+1] = players[0]
-                return -1
-        if(len(players)!=2):
-            return pongps_pb2.currGameState(pos1=-1,pos2=None,ballx=None,bally=None,ballVx=None,ballVy=None)
-        if(request.id > 1):
-            return pongps_pb2.currGameState(pos1=-1,pos2=None,ballx=None,bally=None,ballVx=None,ballVy=None)
-        # decouple ball position, in own message. on timer 
-        # Player doesn't have to ping server for update
-        # Server doesnt have to tell the player the new 
-        # Server will always tell ball position
-        # ONLY CLIENT WILL SEND TO SERVER ITS NEW PLAYER POSITION
-        # SEND BALL AND PLAYER POSITION
-        # SERVER DEALS WITH COLLISION LOGIC
-        # server on two threads sends ball position
-        # other thread 2 threads, for each player, send the opponents position
-        # semaphores eliminated.
-        # ball position always updated
-        # only position of player updated
-        return pongps_pb2.currGameState(pos1=players[0][0].pos,
-                                        pos2=players[1][0].pos,
-                                        ballx=ballxPos,
-                                        bally=ballyPos,
-                                        ballVx=ballvx,
-                                        ballVy=ballvy
-                                        )
-
-    def clientScored(self, request, context):
-        # The server should not receive this type of message
-        # clientScored is to be sent to the clients after the math
-        # shows that one of the clients got a point
-        # Client gprc servicer should implement this
-        raise NotImplementedError('Method not implemented!')
-    
-    # implemented on server for testing purposes.
-
-   
+    start_new_thread(threaded_client, (conn,))
     
 
-    # LEN 2 X Y
-
-
-
     
-if __name__ == '__main__':
-    PORT = str(sys.argv[1])
-    print(f"Starting Game Server on port {PORT}")
-    server = grpc.server(futures.ThreadPoolExecutor(
-        max_workers=int(NUM_WORKERS)))
-    # Game class.
-    certified_gamer_moment = GameServicerServicer()
- 
-
-    pongps_pb2_grpc.add_GameServiceServicer_to_server(certified_gamer_moment, server)
-    
-    BALLVECTOR = [0,0]
-    BALLPOS  = [0,0]
-
-    server.add_insecure_port(f'[::]:{PORT}')
-    server.start()
-
-
-
-    server.wait_for_termination()
