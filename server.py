@@ -1,8 +1,8 @@
 import socket
 from _thread import *
-import sys
-import time
 import Ball as b
+
+# Constants
 SCREEN_WIDTH = 1280
 SCREEN_HEIGHT = 720
 PADDLE_WIDTH = 20
