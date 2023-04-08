@@ -1,3 +1,4 @@
+import os
 import socket
 from _thread import *
 import sys
@@ -13,7 +14,7 @@ PADDLE_HEIGHT = 175
 def checkCollision(paddleOne, paddleTwo, ball):
     paddleOne = paddleOne.split(",")
     paddleTwo = paddleTwo.split(",")
-    print(f"PaddleOne: {paddleOne}\nPaddleTwo: {paddleTwo}\nBall:{ball.x, ball.y}")
+    # print(f"PaddleOne: {paddleOne}\nPaddleTwo: {paddleTwo}\nBall:{ball.x, ball.y}")
 
     ball.checkPaddleCollision(int(paddleOne[0]),int(paddleOne[1]),1)
     ball.checkPaddleCollision(int(paddleTwo[0]),int(paddleTwo[1]),2)
@@ -37,6 +38,7 @@ except socket.error as e:
 s.listen(2)
 print("Waiting for a connection")
 # -- Init position -- # 
+connected_count = 0
 ball_obj = b.Ball()
 ball_pos = start_ball_pos = ball_obj.serialize()
 paddle_one = f"0:{20},{SCREEN_HEIGHT // 2 - PADDLE_HEIGHT // 2}"
@@ -45,6 +47,9 @@ p1Score = p2Score = "0"
 currentId = "0"
 pos = [paddle_one, paddle_two, ball_pos, p1Score, p2Score]
 def threaded_client(conn):
+    global connected_count
+
+    connected_count+=1
     global currentId, pos
     conn.send(str.encode(currentId))
     currentId = "1"
@@ -66,7 +71,7 @@ def threaded_client(conn):
                 break
 
             else:
-                print("Recieved: " + reply)
+                #print("Recieved: " + reply)
                 arr = reply.split(":")
                 id = int(arr[0])
                 pos[id] = reply
@@ -79,7 +84,7 @@ def threaded_client(conn):
                 reply = pos[nid][:] +"/"+ pos[2] + "/" + pos[3]+","+ pos[4]
                 
 
-                print("Sending: " + reply)
+                # print("Sending: " + reply)
             paddleOne = pos[0].split(":")[1]
             paddleTwo = pos[1].split(":")[1]
             
@@ -91,6 +96,11 @@ def threaded_client(conn):
 
     print("Connection Closed")
     currentId = "0"
+    connected_count-=1
+    print("Current Connected"+str(connected_count))
+    if connected_count == 0:
+        print("[SERVER] SESSION ENDED, GOODBYE!")
+        os._exit(1)
     conn.close()
 
 while True:
