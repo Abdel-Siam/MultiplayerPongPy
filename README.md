@@ -1,9 +1,11 @@
 # Pygame Pong - Distributed Systems Project
 This repository contains the source code for a Pygame Pong game developed for a Distributed Systems course project. The game allows multiple players to connect to a server and play against each other in real-time.
 
-![Figure 1. Game State of this Project](game.gif)
 
 
+<p align="center">
+  <img src="game.gif" alt="Game State of our Project" />
+</p>
 
 ## Project Overview
 The project goal was to develop an interesting distributed application using Python and various distributed systems concepts. Our team chose to implement a multiplayer real-time game using Pygame, a popular game development library for Python.
