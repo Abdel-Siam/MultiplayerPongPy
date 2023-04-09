@@ -1,7 +1,7 @@
 import pygame
 from network import Network
 import Player as p
-
+import sys
 
 
 
@@ -25,6 +25,9 @@ class Game:
     def run(self):
         clock = pygame.time.Clock()
         run = True
+        # Load and play background music
+        pygame.mixer.music.load("8bit.wav")
+        pygame.mixer.music.play(-1)  # -1 means the music will loop indefinitely
         while run:
             clock.tick(60)
 
@@ -89,6 +92,10 @@ class Game:
             return int(player2pos[0]), int(player2pos[1]), float(ballpos[0]), float(ballpos[1]), int(playerScore[0]) , int(playerScore[1])
         except:
              return 0,0
+    
+
+
+
 
 
 class Canvas:
