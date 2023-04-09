@@ -4,7 +4,7 @@ This repository contains the source code for a Pygame Pong game developed for a 
 
 
 <p align="center">
-  <img src="game.gif" alt="Game State of our Project" width="400" height="360"/>
+  <img src="game.gif" alt="Game State of our Project" width="700" height="360"/>
   
 </p>
 
